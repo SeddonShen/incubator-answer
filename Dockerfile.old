@@ -43,3 +43,32 @@ RUN cp answer /usr/bin/answer
 
 RUN mkdir -p /data/uploads && chmod 777 /data/uploads \
     && mkdir -p /data/i18n && cp -r i18n/*.yaml /data/i18n
+
+FROM alpine
+LABEL maintainer="linkinstar@apache.org"
+
+ARG TIMEZONE
+ENV TIMEZONE=${TIMEZONE:-"Asia/Shanghai"}
+
+RUN apk update \
+    && apk --no-cache add \
+        bash \
+        ca-certificates \
+        curl \
+        dumb-init \
+        gettext \
+        openssh \
+        sqlite \
+        gnupg \
+        tzdata \
+    && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
+    && echo "${TIMEZONE}" > /etc/timezone
+
+COPY --from=golang-builder /usr/bin/answer /usr/bin/answer
+COPY --from=golang-builder /data /data
+COPY /script/entrypoint.sh /entrypoint.sh
+RUN chmod 755 /entrypoint.sh
+
+VOLUME /data
+EXPOSE 80
+ENTRYPOINT ["/entrypoint.sh"]
