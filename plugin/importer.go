@@ -17,26 +17,40 @@
  * under the License.
  */
 
-//go:generate go run github.com/swaggo/swag/cmd/swag init -g ./cmd/answer/main.go -d ../../ -o ../../docs
+package plugin
 
-package main
+import "github.com/gin-gonic/gin"
 
-import (
-	_ "github.com/Anan1225/incubator-answer-plugins/user-center-slack"
-	_ "github.com/Anan1225/incubator-answer-plugins/user-center-wecom"
-	_ "github.com/SeddonShen/slack_plugin_seddon"
-	_ "github.com/apache/incubator-answer-plugins/connector-github"
-	answercmd "github.com/apache/incubator-answer/cmd"
+type QuestionImporterInfo struct {
+	Title     string   `json:"title"`
+	Content   string   `json:"content"`
+	Tags      []string `json:"tags"`
+	UserEmail string   `json:"user_email"`
+}
+
+type Importer interface {
+	Base
+	GetQuestion(ctx *gin.Context) (questionInfo *QuestionImporterInfo, err error)
+}
+
+var (
+	// CallImporter is a function that calls all registered parsers
+	CallImporter,
+	registerImporter = MakePlugin[Importer](false)
 )
 
-// main godoc
-// @title 	"apache answer"
-// @description = "apache answer api"
-// @version = "v0.0.1"
-// @BasePath = "/"
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
-func main() {
-	answercmd.Main()
+func ImporterEnabled() (enabled bool) {
+	_ = CallImporter(func(fn Importer) error {
+		enabled = true
+		return nil
+	})
+	return
+}
+func GetImporter() (ip Importer, ok bool) {
+	_ = CallImporter(func(fn Importer) error {
+		ip = fn
+		ok = true
+		return nil
+	})
+	return
 }

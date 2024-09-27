@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM golang:1.19-alpine AS golang-builder
+FROM golang:1.22-alpine AS golang-builder
 LABEL maintainer="aichy@sf.com"
 
 ARG GOPROXY
@@ -36,10 +36,11 @@ COPY . ${BUILD_DIR}
 WORKDIR ${BUILD_DIR}
 RUN apk --no-cache add build-base git bash nodejs npm && npm install -g pnpm@8.9.2 \
     && make clean build
-
+# RUN make ui
 RUN chmod 755 answer
-RUN ["/bin/bash","-c","script/build_plugin.sh"]
-RUN cp answer /usr/bin/answer
+
+# RUN ["/bin/bash","-c","script/build_plugin.sh"]
+# RUN cp answer /usr/bin/answer
 
 RUN mkdir -p /data/uploads && chmod 777 /data/uploads \
     && mkdir -p /data/i18n && cp -r i18n/*.yaml /data/i18n
